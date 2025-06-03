@@ -1,9 +1,43 @@
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from student_pipeline import analyze_student
 
 app = Flask(__name__)
 CORS(app)
 
+CSV_PATH = r"C:\Users\user\OneDrive - Lebanese University\Desktop\student_dataset_with_exam_date.csv" ## HON MN EL DESKTOP UPDATE IF NEED ELSEWHERE!
+NEWSAPI_KEY = "9681360b2f5f452cb6ea040341e58943"
+
+
+@app.route('/student_analysis', methods=['POST', 'OPTIONS'])
+def get_student_analysis():
+    print("\n=== New Request ===")
+    print("Method:", request.method)
+    
+    if request.method == 'OPTIONS':
+        print("Handling OPTIONS preflight")
+        response = jsonify({'status': 'preflight'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    
+    print("Received POST with data:", request.json)
+    
+    try:
+        cntstuid = request.json.get('cntstuid')
+        print("Processing student ID:", cntstuid)
+        
+        analysis = analyze_student(CSV_PATH, cntstuid, NEWSAPI_KEY, HF_TOKEN)
+        print("Generated analysis:", analysis[:100] + "...")  # Print first 100 chars
+        
+        return jsonify({'analysis': analysis})
+    
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+
+#
 PREDEFINED_RESPONSES = {
     "hi": "Hello! I'm your friendly AI assistant. Ask me anything fun or school-related!",
     "hello": "Hey there! I'm ready to chat about learning, stories, or just have some fun!",
@@ -40,8 +74,12 @@ def chatbot():
         })
 
 if __name__ == '__main__':
+    app.run(debug=True)
+
+
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 
 
 
-
+    
