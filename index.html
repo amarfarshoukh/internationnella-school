@@ -331,38 +331,23 @@
   <div id="chatbot-toggle" onclick="toggleChatbot()">💬 Chat</div>
 
   <!-- Chatbot Container -->
-<div id="chatbot-container">
-  <div id="chatbot-header">Internationnella Assistant 
-    <span onclick="toggleChatbot()" style="cursor:pointer;">✖</span>
-  </div>
-  
-  <div id="chatbot-messages">
-    <div class="message bot-message">
-      <strong>Bot:</strong> Hello! I'm your AI assistant. Ask me anything about school, grades, or just chat!
+  <div id="chatbot-container">
+    <div id="chatbot-header">Internationnella Assistant 
+      <span onclick="toggleChatbot()" style="cursor:pointer;">✖</span>
     </div>
-  </div>
-
-  <!-- Chatbot controls (buttons + input) -->
-  <div id="chatbot-controls">
-    <!-- Suggested Questions -->
-    <div id="chatbot-questions">
-      <button onclick="sendPreset('What is photosynthesis')">🌱 What is photosynthesis?</button>
-      <button onclick="sendPreset('Tell me a story')">📖 Tell me a story</button>
-      <button onclick="sendPreset('Write a poem')">🎨 Write a poem</button>
-      <button onclick="sendPreset('Motivate me')">💡 Motivate me</button>
-      <button onclick="sendPreset('Tell me a joke')">😂 Tell me a joke</button>
+    
+    <div id="chatbot-messages">  
     </div>
 
-    <!-- User input -->
-    <input 
-      type="text" 
-      id="chatbot-input" 
-      placeholder="Type your question..." 
-      onkeypress="handleChatKey(event)">
+
+      <!-- User input -->
+      <input 
+        type="text" 
+        id="chatbot-input" 
+        placeholder="Type your question..." 
+        onkeypress="handleChatKey(event)">
+    </div>
   </div>
-</div>
-
-
 
   <!-- Top gold decoration -->
   <div class="top-decoration"></div>
@@ -392,21 +377,12 @@
     </div>
   </form>
 
-
-
-
-
-
-
-
-
   <!-- Result Box -->
   <div id="result-box">
-  <h2>Evaluation:</h2>
-  <p id="recommendation">Fill in the form to see your result.</p>
-  <p id="analysis-box" style="display:none; margin-top: 1em; font-style: italic;"></p>
-</div>
-
+    <h2>Evaluation:</h2>
+    <p id="recommendation">Fill in the form to see your result.</p>
+    <p id="analysis-box" style="display:none; margin-top: 1em; font-style: italic; font-size: 25px;"></p>
+  </div>
 
   <!-- Footer -->
   <footer>
@@ -421,163 +397,171 @@
   <!-- Bottom gold decoration -->
   <div class="bottom-decoration"></div>
 
-
   <script>
-  
-
+  // --- Student analysis logic remains unchanged ---
   async function fetchStudentAnalysis(cntstuid) {
-  const analysisBox = document.getElementById('analysis-box');
-  analysisBox.textContent = "Loading analysis...";
-  analysisBox.style.display = 'block';
+    const analysisBox = document.getElementById('analysis-box');
+    analysisBox.textContent = "Loading analysis...";
+    analysisBox.style.display = 'block';
 
-  try {
-    console.log("Sending request for student:", cntstuid);
-    
-    const response = await fetch('http://localhost:5000/student_analysis', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ cntstuid: cntstuid })
-    });
+    try {
+      console.log("Sending request for student:", cntstuid);
+      const response = await fetch('http://localhost:5000/student_analysis', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ cntstuid: cntstuid })
+      });
 
-    console.log("Received response status:", response.status);
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Backend error:", errorData);
-      throw new Error(errorData.error || `Server returned ${response.status}`);
-    }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Server returned ${response.status}`);
+      }
 
-    const data = await response.json();
-    console.log("Full response:", data);
-    
-    if (data.analysis) {
-      analysisBox.textContent = data.analysis;
-    } else if (data.error) {
-      analysisBox.textContent = `⚠️ Backend Error: ${data.error}`;
-    } else {
-      analysisBox.textContent = "⚠️ Unexpected response from server";
-    }
-    
-  } catch (error) {
-    console.error("Fetch failed:", error);
-    let errorMsg = `⚠️ Error: ${error.message}`;
-    
-    // Add more details if available
-    if (error.response) {
-        errorMsg += ` (Status: ${error.response.status})`;
-    }
-    
-    analysisBox.innerHTML = `
-        ${errorMsg}<br><br>
+      const data = await response.json();
+      if (data.analysis) {
+        analysisBox.textContent = data.analysis;
+      } else if (data.error) {
+        analysisBox.textContent = `⚠️ Backend Error: ${data.error}`;
+      } else {
+        analysisBox.textContent = "⚠️ Unexpected response from server";
+      }
+    } catch (error) {
+      analysisBox.innerHTML = `
+        ⚠️ Error: ${error.message}<br><br>
         <small>Check console for details and ensure:<br>
         - Flask server is running<br>
         - No CORS errors in Network tab</small>
-    `;
-}
-}
+      `;
+    }
+  }
 
-   
-
-
-
+  // --- Chatbot logic: STREAMING with /chatbot_stream ---
   function toggleChatbot() {
-  const container = document.getElementById('chatbot-container');
-  container.style.display = (container.style.display === 'none') ? 'block' : 'none';
-}
+    const container = document.getElementById('chatbot-container');
+    container.style.display = (container.style.display === 'none') ? 'block' : 'none';
+  }
 
-// Send message to backend
+  // STREAMING function for chatbot
+  let botMessageCount = 0;  // to create unique IDs
+
 function sendMessage(message) {
   const messagesDiv = document.getElementById('chatbot-messages');
+
+  // Add user message
   messagesDiv.innerHTML += `<div class="message user-message"><strong>You:</strong> ${message}</div>`;
-  
-  fetch('http://localhost:5000/chatbot', {
+
+  // Create a unique ID for the bot message
+  botMessageCount++;
+  const botTypingId = `bot-typing-${botMessageCount}`;
+
+  // Create a new bot message container (no reuse)
+  const botDiv = document.createElement("div");
+  botDiv.className = "message bot-message";
+  botDiv.innerHTML = `<strong>Bot:</strong> <span id="${botTypingId}"></span>`;
+  messagesDiv.appendChild(botDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+  const botTyping = document.getElementById(botTypingId);
+  let botReply = "";
+
+  fetch('http://localhost:5000/chatbot_stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: message })
   })
-  .then(response => response.json())
-  .then(data => {
-    messagesDiv.innerHTML += `<div class="message bot-message"><strong>Bot:</strong> ${data.reply}</div>`;
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  .then(response => {
+    if (!response.body) throw new Error('No response body');
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    function readChunk() {
+      return reader.read().then(({ done, value }) => {
+        if (done) return;
+        if (value) {
+          const chunk = decoder.decode(value);
+          botReply += chunk;
+          botTyping.textContent = botReply;
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        return readChunk();
+      });
+    }
+    return readChunk();
+  })
+  .catch(error => {
+    botTyping.textContent = "⚠️ Error: " + error.message;
   });
 }
 
-// Handle typing
-function handleChatKey(e) {
-  if (e.key === 'Enter') {
-    const input = document.getElementById('chatbot-input');
-    const message = input.value.trim();
-    if (message !== "") {
-      sendMessage(message);
-      input.value = '';
+
+
+  // Handle typing
+  function handleChatKey(e) {
+    if (e.key === 'Enter') {
+      const input = document.getElementById('chatbot-input');
+      const message = input.value.trim();
+      if (message !== "") {
+        sendMessage(message);
+        input.value = '';
+      }
     }
   }
-}
 
-// Handle preset buttons
-function sendPreset(question) {
-  document.getElementById('chatbot-input').value = question;
-  sendMessage(question);
-}
-////////////////////////////////////////////////////////////////////
+  // Handle preset buttons
+  function sendPreset(question) {
+    document.getElementById('chatbot-input').value = question;
+    sendMessage(question);
+  }
+
   // Student form grade recommendation logic
   document.getElementById('student-form').addEventListener('submit', (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const studentId = document.getElementById('student-id').value;
-  const date = document.getElementById('date').value;
-  const city = document.getElementById('city').value;
-  const grade = parseFloat(document.getElementById('grade').value);
+    const studentId = document.getElementById('student-id').value;
+    const date = document.getElementById('date').value;
+    const city = document.getElementById('city').value;
+    const grade = parseFloat(document.getElementById('grade').value);
 
-  let recommendation = '';
-  let bgColor = '';
-  
+    let recommendation = '';
+    let bgColor = '';
 
-  if (grade < 10) {
-    recommendation = "Don't be discouraged, there's room to improve. Keep Trying!";
-    bgColor = '#5B0015';
-  } else if (grade >= 10 && grade <= 16) {
-    recommendation = "Not bad! You're doing okay, Keep Up the Steady Work.";
-    bgColor = '#7C6B47';
-  } else if (grade > 16 && grade < 19) {
-    recommendation = "Great job! You're doing very well, Keep the Momentum!";
-    bgColor = '#A9A9A9';
-  } else if (grade >= 19 && grade <= 20) {
-    recommendation = "Excellent work! You're at the top of your class, Well done!";
-    bgColor = '#B8860B';
-  } else {
-    recommendation = "Invalid grade entered.";
-    bgColor = '#444';
-  }
+    if (grade < 10) {
+      recommendation = "Don't be discouraged, there's room to improve. Keep Trying!";
+      bgColor = '#5B0015';
+    } else if (grade >= 10 && grade <= 16) {
+      recommendation = "Not bad! You're doing okay, Keep Up the Steady Work.";
+      bgColor = '#7C6B47';
+    } else if (grade > 16 && grade < 19) {
+      recommendation = "Great job! You're doing very well, Keep the Momentum!";
+      bgColor = '#A9A9A9';
+    } else if (grade >= 19 && grade <= 20) {
+      recommendation = "Excellent work! You're at the top of your class, Well done!";
+      bgColor = '#B8860B';
+    } else {
+      recommendation = "Invalid grade entered.";
+      bgColor = '#444';
+    }
 
-  document.getElementById('recommendation').innerText =
-    `Student ID ${studentId} from ${city}, evaluated on ${date}, scored ${grade}/20.\n${recommendation}`;
-  document.getElementById('result-box').style.backgroundColor = bgColor;
+    document.getElementById('recommendation').innerText =
+      `Student ID ${studentId} from ${city}, evaluated on ${date}, scored ${grade}/20.\n${recommendation}`;
+    document.getElementById('result-box').style.backgroundColor = bgColor;
 
-  // Call backend analysis only if grade < 16 (your original logic)
-  if (grade < 16) {
-    fetchStudentAnalysis(studentId);
-  } else {
-    // Hide analysis if grade >= 16
-    const analysisBox = document.getElementById('analysis-box');
-    if (analysisBox) analysisBox.style.display = 'none';
-  }
-});
-
+    // Call backend analysis only if grade < 16
+    if (grade < 16) {
+      fetchStudentAnalysis(studentId);
+    } else {
+      // Hide analysis if grade >= 16
+      const analysisBox = document.getElementById('analysis-box');
+      if (analysisBox) analysisBox.style.display = 'none';
+    }
+  });
 
   // Attach chat input event
   document.getElementById('chatbot-input').addEventListener('keydown', handleChatKey);
-  //
-  console.log("Request initiated:", {
-  url: 'http://localhost:5000/student_analysis',
-  method: 'POST',
-  body: JSON.stringify({ cntstuid: cntstuid })
-}); // 
-</script>
 
+  </script>
 </body>
 </html>
-
