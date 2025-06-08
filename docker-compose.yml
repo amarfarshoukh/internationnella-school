@@ -7,10 +7,11 @@ services:
       - "5000:5000"
     volumes:
       - ./:/app
+      - C:/student_data:/data 
 
   frontend:
     image: nginx:alpine
     volumes:
-      - ./frontend:/usr/share/nginx/html:ro
+      - ./:/usr/share/nginx/html:ro  # fixed path
     ports:
       - "8080:80"
