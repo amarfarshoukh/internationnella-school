@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Internationnella School Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0b0b0b;
+      color: #f0eaea;
+      font-family: 'Dancing Script', cursive;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-container {
+      background-color: #1a1a1a;
+      border: 1.5px solid gold;
+      border-radius: 18px;
+      padding: 40px 32px 32px 32px;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.18);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 340px;
+    }
+    .school-logo {
+      width: 120px;
+      margin-bottom: 20px;
+    }
+    .school-name {
+      font-size: 2.1em;
+      color: #800000;
+      margin-bottom: 32px;
+      text-align: center;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    label {
+      font-size: 1.2em;
+      margin-bottom: 6px;
+      color: #f0eaea;
+      align-self: flex-start;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 22px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background-color: #0b0b0b;
+      color: #f0eaea;
+      font-size: 1.1em;
+      font-family: 'Dancing Script', cursive;
+      transition: border-color 0.3s;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: gold;
+      outline: none;
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+    }
+    .login-btn {
+      background-color: gold;
+      color: #0b0b0b;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 10px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      font-family: 'Dancing Script', cursive;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    .login-btn:hover {
+      background-color: #ffd700;
+      box-shadow: 0 0 18px rgba(255, 215, 0, 0.6);
+    }
+    .login-error {
+      color: #ff5151;
+      background: #2a0000;
+      border-radius: 7px;
+      padding: 7px 13px;
+      margin-bottom: 13px;
+      font-size: 1.1em;
+      display: none;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img src="logo.png" class="school-logo" alt="School Logo">
+    <div class="school-name">Internationnella School</div>
+    
+    <div id="login-error" class="login-error"></div>
+    <form id="login-form" autocomplete="off">
+      <label for="username">Username</label>
+      <input type="text" id="username" required autocomplete="off">
+
+      <label for="password">Password</label>
+      <input type="password" id="password" required autocomplete="off">
+
+      <button type="submit" class="login-btn">Login</button>
+    </form>
+  </div>
+  
+  <script>
+    // Change these to your real usernames/passwords or fetch from backend
+    const VALID_USERS = [
+      { username: "amar", password: "mini25" },
+      { username: "ali", password: "mini15" },
+      // Add more users as needed
+    ];
+    // Where to go after successful login:
+    const MAIN_APP_URL = "index.html"; // Change to your main app's page
+
+    const loginForm = document.getElementById("login-form");
+    const errorBox = document.getElementById("login-error");
+
+    loginForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      const user = VALID_USERS.find(u => u.username === username && u.password === password);
+      if (user) {
+        errorBox.style.display = "none";
+        // You can set a session/cookie here if you wish
+        window.location.href = MAIN_APP_URL;
+      } else {
+        errorBox.textContent = "Wrong password, please try again.";
+        errorBox.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
