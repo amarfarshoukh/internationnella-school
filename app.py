@@ -2,16 +2,18 @@
 from flask import Flask, request, jsonify, Response,json
 from flask_cors import CORS
 from student_pipeline import analyze_student
+import sqlite3
 import requests  # For making requests to Ollama's API
 
 app = Flask(__name__)
 CORS(app)
 
 # Ollama configuration
-OLLAMA_API_URL = "http://localhost:11434/api/generate"  # Default Ollama API endpoint
+OLLAMA_API_URL = "http://host.docker.internal:11434/api/generate"
+ # Default Ollama API endpoint
 PHI3_MODEL_NAME = "phi3:mini"  # The model name you used with 'ollama pull phi3'
 
-CSV_PATH = r"C:\Users\user\OneDrive - Lebanese University\Desktop\student_dataset_with_exam_date.csv"
+CSV_PATH = "/data/student_dataset_with_exam_date.csv"
 NEWSAPI_KEY = "9681360b2f5f452cb6ea040341e58943"
 
 def query_phi3(prompt):
@@ -29,6 +31,25 @@ def query_phi3(prompt):
     except Exception as e:
         print(f"Error querying Phi-3 model: {str(e)}")
         return None
+DB_PATH = "students.db"
+
+@app.route('/get_student_info', methods=['POST'])
+def get_student_info():
+    data = request.get_json()
+    student_id = str(data.get('student_id')).rstrip('.0')
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT ExamDate, CNT FROM students WHERE RTRIM(CNTSTUID, '.0') = ? LIMIT 1",
+        (student_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        exam_date, city = row
+        return jsonify({'ExamDate': exam_date, 'CNT': city})
+    else:
+        return jsonify({'error': 'Student ID not found'}), 404
+    
 
 @app.route('/student_analysis', methods=['POST', 'OPTIONS'])
 def get_student_analysis():
@@ -57,6 +78,7 @@ def get_student_analysis():
     except Exception as e:
         print("Error:", str(e))
         return jsonify({'error': str(e)}), 500
+         
 
 @app.route('/chatbot_stream', methods=['POST'])
 def chatbot_stream():
@@ -80,4 +102,4 @@ def chatbot_stream():
     return Response(generate(user_input), mimetype='text/plain')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000,debug=True)

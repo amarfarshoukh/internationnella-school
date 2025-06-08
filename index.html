@@ -365,10 +365,10 @@
       <input type="number" id="student-id" required>
 
       <label for="date">Date:</label>
-      <input type="date" id="date" required>
+      <input type="date" id="date" readonly>
 
       <label for="city">City:</label>
-      <input type="text" id="city" required>
+      <input type="text" id="city" readonly>
 
       <label for="grade">Grade (out of 20):</label>
       <input type="number" id="grade" min="0" max="20" step="0.1" required>
@@ -447,56 +447,54 @@
   // STREAMING function for chatbot
   let botMessageCount = 0;  // to create unique IDs
 
-function sendMessage(message) {
-  const messagesDiv = document.getElementById('chatbot-messages');
+  function sendMessage(message) {
+    const messagesDiv = document.getElementById('chatbot-messages');
 
-  // Add user message
-  messagesDiv.innerHTML += `<div class="message user-message"><strong>You:</strong> ${message}</div>`;
+    // Add user message
+    messagesDiv.innerHTML += `<div class="message user-message"><strong>You:</strong> ${message}</div>`;
 
-  // Create a unique ID for the bot message
-  botMessageCount++;
-  const botTypingId = `bot-typing-${botMessageCount}`;
+    // Create a unique ID for the bot message
+    botMessageCount++;
+    const botTypingId = `bot-typing-${botMessageCount}`;
 
-  // Create a new bot message container (no reuse)
-  const botDiv = document.createElement("div");
-  botDiv.className = "message bot-message";
-  botDiv.innerHTML = `<strong>Bot:</strong> <span id="${botTypingId}"></span>`;
-  messagesDiv.appendChild(botDiv);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    // Create a new bot message container (no reuse)
+    const botDiv = document.createElement("div");
+    botDiv.className = "message bot-message";
+    botDiv.innerHTML = `<strong>Bot:</strong> <span id="${botTypingId}"></span>`;
+    messagesDiv.appendChild(botDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-  const botTyping = document.getElementById(botTypingId);
-  let botReply = "";
+    const botTyping = document.getElementById(botTypingId);
+    let botReply = "";
 
-  fetch('http://localhost:5000/chatbot_stream', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: message })
-  })
-  .then(response => {
-    if (!response.body) throw new Error('No response body');
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+    fetch('http://localhost:5000/chatbot_stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: message })
+    })
+    .then(response => {
+      if (!response.body) throw new Error('No response body');
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
-    function readChunk() {
-      return reader.read().then(({ done, value }) => {
-        if (done) return;
-        if (value) {
-          const chunk = decoder.decode(value);
-          botReply += chunk;
-          botTyping.textContent = botReply;
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-        return readChunk();
-      });
-    }
-    return readChunk();
-  })
-  .catch(error => {
-    botTyping.textContent = "⚠️ Error: " + error.message;
-  });
-}
-
-
+      function readChunk() {
+        return reader.read().then(({ done, value }) => {
+          if (done) return;
+          if (value) {
+            const chunk = decoder.decode(value);
+            botReply += chunk;
+            botTyping.textContent = botReply;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          }
+          return readChunk();
+        });
+      }
+      return readChunk();
+    })
+    .catch(error => {
+      botTyping.textContent = "⚠️ Error: " + error.message;
+    });
+  }
 
   // Handle typing
   function handleChatKey(e) {
@@ -516,11 +514,37 @@ function sendMessage(message) {
     sendMessage(question);
   }
 
-  // Student form grade recommendation logic
+  // === YOUR REQUEST: Autofill ONLY on Enter in Student ID field ===
+  document.getElementById('student-id').addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submission
+      const studentId = e.target.value.trim();
+      if (!studentId) return;
+      try {
+        const res = await fetch('http://localhost:5000/get_student_info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student_id: studentId })
+        });
+        if (!res.ok) {
+          document.getElementById('date').value = '';
+          document.getElementById('city').value = '';
+          return;
+        }
+        const data = await res.json();
+        document.getElementById('date').value = data.ExamDate || '';
+        document.getElementById('city').value = data.CNT || '';
+      } catch (err) {
+        console.error('Error autofilling student info:', err);
+      }
+    }
+  });
+
+  // === Evaluate logic remains unchanged ===
   document.getElementById('student-form').addEventListener('submit', (e) => {
     e.preventDefault();
 
-    const studentId = document.getElementById('student-id').value;
+    const studentId = document.getElementById('student-id').value.trim();
     const date = document.getElementById('date').value;
     const city = document.getElementById('city').value;
     const grade = parseFloat(document.getElementById('grade').value);
@@ -549,11 +573,9 @@ function sendMessage(message) {
       `Student ID ${studentId} from ${city}, evaluated on ${date}, scored ${grade}/20.\n${recommendation}`;
     document.getElementById('result-box').style.backgroundColor = bgColor;
 
-    // Call backend analysis only if grade < 16
     if (grade < 16) {
       fetchStudentAnalysis(studentId);
     } else {
-      // Hide analysis if grade >= 16
       const analysisBox = document.getElementById('analysis-box');
       if (analysisBox) analysisBox.style.display = 'none';
     }
@@ -562,6 +584,6 @@ function sendMessage(message) {
   // Attach chat input event
   document.getElementById('chatbot-input').addEventListener('keydown', handleChatKey);
 
-  </script>
+</script>
 </body>
 </html>

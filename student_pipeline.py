@@ -57,7 +57,7 @@ def query_phi3_locally(articles, exam_date, country):
     )
     try:
         response = requests.post(
-            "http://localhost:11434/api/generate",
+            "http://host.docker.internal:11434/api/generate",
             json={
                 "model": "phi3:mini",
                 "prompt": prompt,
