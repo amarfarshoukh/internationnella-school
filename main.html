@@ -374,6 +374,7 @@
       <input type="number" id="grade" min="0" max="20" step="0.1" required>
 
       <button type="submit">Evaluate</button>
+      <button type="button" id="clear-btn">Clear</button>
     </div>
   </form>
 
@@ -580,6 +581,10 @@
       if (analysisBox) analysisBox.style.display = 'none';
     }
   });
+  document.getElementById('clear-btn').addEventListener('click', function() {
+    document.getElementById('student-form').reset();
+    document.getElementById('result').innerHTML = '';
+});
 
   // Attach chat input event
   document.getElementById('chatbot-input').addEventListener('keydown', handleChatKey);
