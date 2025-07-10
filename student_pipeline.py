@@ -29,14 +29,15 @@ def fetch_news(country, exam_date, api_key):
     from_date = (dt - timedelta(days=3)).strftime("%Y-%m-%d")
     to_date = (dt + timedelta(days=3)).strftime("%Y-%m-%d")
     url = (
-    "https://newsapi.org/v2/everything"
-    "?q=ALB"
-    "&from=2025-06-01"# assuming today is 2025-06-06, this is within the last 30 days
-    "&to=2025-06-06"
-    "&sortBy=publishedAt"
-    "&language=en"
-    f"&apiKey=9681360b2f5f452cb6ea040341e58943"
+    f"https://newsapi.org/v2/everything"
+    f"?q={country}"
+    f"&from={from_date}"
+    f"&to={to_date}"
+    f"&sortBy=publishedAt"
+    f"&language=en"
+    f"&apiKey={api_key}"
 )
+
 
     try:
         response = requests.get(url)

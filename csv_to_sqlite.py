@@ -3,8 +3,8 @@ import pandas as pd
 import sqlite3
 import os
 
-csv_path = r"C:\student_data\student_dataset_with_exam_date.csv"  # Path to your CSV
-db_path = "students.db"
+csv_path = r"C:\Users\user\OneDrive - Lebanese University\Desktop\student_dataset_with_exam_date_presentation.csv"  # Path to your CSV
+db_path = "students_presentation.db"
 chunksize = 100_000 
 
 print(f"Estimating total number of lines in {csv_path} (this may take a while)...")

@@ -1,4 +1,5 @@
 # Ignore SQLite database files
 students.db
+students_presentation.db
 # or, to ignore all .db files
  *.db

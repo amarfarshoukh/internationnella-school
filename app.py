@@ -13,7 +13,7 @@ OLLAMA_API_URL = "http://host.docker.internal:11434/api/generate"
  # Default Ollama API endpoint
 PHI3_MODEL_NAME = "phi3:mini"  # The model name you used with 'ollama pull phi3'
 
-CSV_PATH = "/data/student_dataset_with_exam_date.csv"
+CSV_PATH = "/data/student_dataset_with_exam_date_presentation.csv"
 NEWSAPI_KEY = "9681360b2f5f452cb6ea040341e58943"
 
 def query_phi3(prompt):
@@ -31,7 +31,7 @@ def query_phi3(prompt):
     except Exception as e:
         print(f"Error querying Phi-3 model: {str(e)}")
         return None
-DB_PATH = "students.db"
+DB_PATH = "students_presentation.db"
 
 @app.route('/get_student_info', methods=['POST'])
 def get_student_info():
